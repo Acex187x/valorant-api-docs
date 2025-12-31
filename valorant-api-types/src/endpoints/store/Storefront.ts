@@ -39,19 +39,60 @@ const bonusOfferSchema = z.object({
     IsSeen: z.boolean()
 })
 
+const CurrencyCostSchema = z.record(z.string(), z.number());
+
+const RewardSchema = z.object({
+  ItemTypeID: z.string(),
+  ItemID: z.string(),
+  Quantity: z.number(),
+});
+
+const PurchaseInformationSchema = z.object({
+  DataAssetID: z.string(),
+  OfferID: z.string(),
+  OfferType: z.number(),
+  StartDate: z.string(),
+  PrimaryCurrencyID: z.string(),
+  Cost: CurrencyCostSchema,
+  DiscountedCost: CurrencyCostSchema,
+  DiscountedPercentage: z.number(),
+  Rewards: z.array(RewardSchema),
+  AdditionalContext: z.array(z.any()),
+  WholesaleOnly: z.boolean(),
+  IsGiftable: z.number(),
+});
+
+const PluginStoreSchema = z.object({
+  PluginID: z.string(),
+  PluginOffers: z.object({
+    StoreOffers: z.array(
+      z.object({
+        PurchaseInformation: PurchaseInformationSchema,
+        SubOffers: z.array(
+          z.object({
+            PurchaseInformation: PurchaseInformationSchema,
+          })
+        ),
+      })
+    ),
+    RemainingDurationInSeconds: z.number(),
+  }),
+});
+
 export const storefrontEndpoint = {
     name: 'Storefront',
     description: 'Get the currently available items in the store',
-    queryName: 'Store_GetStorefrontV2',
+    queryName: 'Store_GetStorefrontV3',
     category: 'Store Endpoints',
     type: 'pd',
-    suffix: 'store/v2/storefront/{puuid}',
+    suffix: 'store/v3/storefront/{puuid}',
     riotRequirements: {
         token: true,
         entitlement: true,
         clientPlatform: true,
         clientVersion: true
     },
+    body: z.object({}),
     responses: {
         '200': z.object({
             FeaturedBundle: z.object({
@@ -83,7 +124,8 @@ export const storefrontEndpoint = {
             BonusStore: z.object({
                 BonusStoreOffers: z.array(bonusOfferSchema),
                 BonusStoreRemainingDurationInSeconds: z.number()
-            }).optional().describe('Night market')
+            }).optional().describe('Night market'),
+            PluginStores: z.array(PluginStoreSchema),
         })
     }
 } as const satisfies ValorantEndpoint
